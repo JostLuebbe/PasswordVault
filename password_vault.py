@@ -5,14 +5,14 @@ import pickle as pk
 import tkinter as tk
 import tkinter.messagebox
 import tkinter.scrolledtext as st
-from logging import FileHandler
 from tkinter import ttk
 
 
 class AuthRecordViewer(object):
-    def __init__(self, master, pv, clicked_file_name):
+    def __init__(self, master, pv, file_viewer, clicked_file_name):
         self.master = master
         self.clicked_file_name = clicked_file_name
+        self.file_viewer = file_viewer
         master.wm_title(self.clicked_file_name)
 
         # Variables
@@ -34,7 +34,7 @@ class AuthRecordViewer(object):
         # Grid Components
         self.grid_components()
 
-        self.update_tree()
+        self.update_auth_record_tree()
 
     def configure_components(self):
         tk.Grid.columnconfigure(self.master, 0, weight=1)
@@ -74,7 +74,7 @@ class AuthRecordViewer(object):
         self.add_record_button.grid(column=0, row=3, sticky=tk.NSEW)
         self.delete_record_button.grid(column=0, row=4, sticky=tk.NSEW)
 
-    def update_tree(self):
+    def update_auth_record_tree(self):
         self.passwords_tree.delete(*self.passwords_tree.get_children())
         for auth_record_object in self.pv.auth_record_list:
             self.passwords_tree.insert('', 0, text=auth_record_object.system,
@@ -102,7 +102,8 @@ class AuthRecordViewer(object):
         def submit_record(window):
             self.pv.edit_auth_record(self.passwords_tree.item(self.passwords_tree.focus())['text'],
                                      username_entry.get(), password_entry.get())
-            self.update_tree()
+            self.update_auth_record_tree()
+            self.file_viewer.update_file_tree()
             window.destroy()
 
         b = tk.Button(window, text='Submit', command=lambda: submit_record(window))
@@ -112,7 +113,8 @@ class AuthRecordViewer(object):
         window = tk.Toplevel()
         window.wm_title('Delete Record')
 
-        l = tk.Label(window, text='Input the system of the auth record you want to delete from the _PasswordVault.')
+        l = tk.Label(window,
+                     text='Input the system of the auth record you want to delete from ' + self.clicked_file_name + '.')
         l.grid(row=0, column=0, columnspan=2)
 
         sys_label = tk.Label(window, text='System:')
@@ -127,7 +129,8 @@ class AuthRecordViewer(object):
                 return
 
             self.pv.delete_auth_record(sys_entry.get())
-            self.update_tree()
+            self.update_auth_record_tree()
+            self.file_viewer.update_file_tree()
             window.destroy()
 
         b = tk.Button(window, text='Submit', command=lambda: submit_record(window))
@@ -137,7 +140,7 @@ class AuthRecordViewer(object):
         window = tk.Toplevel()
         window.wm_title('Add Record')
 
-        l = tk.Label(window, text='Input the following three fields to add a record to the _PasswordVault.')
+        l = tk.Label(window, text='Input the following three fields to add a record to ' + self.clicked_file_name + '.')
         l.grid(row=0, column=0, columnspan=2)
 
         sys_label = tk.Label(window, text='System:')
@@ -164,7 +167,8 @@ class AuthRecordViewer(object):
                 return
 
             self.pv.add_auth_record(sys_entry.get(), username_entry.get(), password_entry.get())
-            self.update_tree()
+            self.update_auth_record_tree()
+            self.file_viewer.update_file_tree()
             window.destroy()
 
         b = tk.Button(window, text='Submit', command=lambda: submit_record(window))
@@ -185,6 +189,8 @@ class PasswordFilesViewer(object):
         self.title_label = tk.Label(self.main_frame)
         self.password_files_tree = ttk.Treeview(self.main_frame)
         self.debug_info = st.ScrolledText(self.main_frame)
+        self.add_file_button = tk.Button(self.main_frame)
+        self.delete_file_button = tk.Button(self.main_frame)
 
         # Customize GUI Components
         self.configure_components()
@@ -193,7 +199,7 @@ class PasswordFilesViewer(object):
         self.grid_components()
 
         # Populate Tree
-        self.populate_password_files_tree()
+        self.update_file_tree()
 
     def configure_components(self):
         tk.Grid.columnconfigure(self.master, 0, weight=1)
@@ -226,15 +232,87 @@ class PasswordFilesViewer(object):
         )
         self.debug_info.tag_config('warning', foreground='red')
 
+        self.add_file_button.config(
+            text='Add File',
+            command=self.create_password_file
+        )
+
+        self.delete_file_button.config(
+            text='Delete File',
+            command=self.delete_password_file
+        )
+
+    def delete_password_file(self):
+        window = tk.Toplevel()
+        window.wm_title('Delete File')
+
+        l = tk.Label(window, text='Input the name of the file you would like to delete.')
+        l.grid(row=0, column=0, columnspan=2)
+
+        file_name_label = tk.Label(window, text='File Name:')
+        file_name_label.grid(column=0, row=1)
+
+        file_name_entry = tk.Entry(window)
+        file_name_entry.grid(column=1, row=1)
+
+        def submit_record(window):
+            if not file_name_entry.get():
+                tk.messagebox.showerror('Input Error', 'Please input the name of the file you would like to delete.')
+                return
+
+            directory = os.fsencode(os.getcwd() + '\\resources')
+
+            for file in os.listdir(directory):
+                filename = os.fsdecode(file)
+                if filename.endswith('.pk'):
+                    if file_name_entry.get() in filename:
+                        os.remove(os.getcwd() + '\\resources\\' + filename)
+
+            self.update_file_tree()
+            window.destroy()
+
+        b = tk.Button(window, text='Delete', command=lambda: submit_record(window))
+        b.grid(column=0, row=2, columnspan=2)
+
+    def create_password_file(self):
+        window = tk.Toplevel()
+        window.wm_title('Create File')
+
+        l = tk.Label(window, text='Input the name of the file you would like to create.')
+        l.grid(row=0, column=0, columnspan=2)
+
+        file_name_label = tk.Label(window, text='File Name:')
+        file_name_label.grid(column=0, row=1)
+
+        file_name_entry = tk.Entry(window)
+        file_name_entry.grid(column=1, row=1)
+
+        def submit_record(window):
+            if not file_name_entry.get():
+                tk.messagebox.showerror('Input Error', 'Please input the name of the file you would like to create.')
+                return
+
+            temp_list = list()
+
+            with open(os.getcwd() + '\\resources\\' + file_name_entry.get() + '.pk', 'wb') as f:
+                pk.dump(temp_list, f)
+            self.update_file_tree()
+            window.destroy()
+
+        b = tk.Button(window, text='Create', command=lambda: submit_record(window))
+        b.grid(column=0, row=2, columnspan=2)
+
     def open_password_file(self, event):
         clicked_file_name = self.password_files_tree.item(self.password_files_tree.focus())['text']
         self.pv.file_name = clicked_file_name
 
         inner_root = tk.Tk()
-        AuthRecordViewer(inner_root, self.pv, clicked_file_name)
+        AuthRecordViewer(inner_root, self.pv, self, clicked_file_name, )
         inner_root.mainloop()
 
-    def populate_password_files_tree(self):
+    def update_file_tree(self):
+        self.password_files_tree.delete(*self.password_files_tree.get_children())
+
         directory = os.fsencode(os.getcwd() + '\\resources')
 
         for file in os.listdir(directory):
@@ -243,7 +321,9 @@ class PasswordFilesViewer(object):
                 with open(os.getcwd() + '\\resources\\' + filename, 'rb') as f:
                     temp_list = pk.load(f)
 
-                    self.password_files_tree.insert('', 0, text=filename, values=(len(temp_list)))
+                print(filename + ': ' + str(len(temp_list)))
+
+                self.password_files_tree.insert('', 0, text=filename, values=(len(temp_list)))
 
         if len(self.password_files_tree.get_children()) == 0:
             lg.error('Could not find any old password files!')
@@ -253,9 +333,11 @@ class PasswordFilesViewer(object):
         self.title_label.grid(column=0, row=0, columnspan=2)
         self.password_files_tree.grid(column=0, row=1, columnspan=2, sticky=tk.NSEW)
         self.debug_info.grid(column=0, row=2, columnspan=2, sticky=tk.NSEW)
+        self.add_file_button.grid(column=0, row=3, sticky=tk.NSEW)
+        self.delete_file_button.grid(column=1, row=3, sticky=tk.NSEW)
 
     def end_password_vault(self):
-        self.pv.generate_byte_file()
+        self.pv.save_file()
         self.master.destroy()
 
 
@@ -280,24 +362,22 @@ class TextHandler(lg.Handler):
         self.text.after(0, append)
 
 
-class AuthRecord(object):
-    def __init__(self, inc_system, inc_username, inc_password):
-        self.system = inc_system
-        self.username = inc_username
-        self.password = ''
-        self.encrypt_password(inc_password)
-
-    def get_username(self):
-        return self.username
-
-    def encrypt_password(self, inc_password):
-        self.password = b64.b64encode(inc_password.encode('utf-8'))
-
-    def get_password(self):
-        return b64.b64decode(self.password).decode('utf-8')
-
-
 class PasswordVault(object):
+    class AuthRecord(object):
+        def __init__(self, inc_system, inc_username, inc_password):
+            self.system = inc_system
+            self.username = inc_username
+            self.password = ''
+            self.encrypt_password(inc_password)
+
+        def get_username(self):
+            return self.username
+
+        def encrypt_password(self, inc_password):
+            self.password = b64.b64encode(inc_password.encode('utf-8'))
+
+        def get_password(self):
+            return b64.b64decode(self.password).decode('utf-8')
 
     def __init__(self, master=None, filename=None):
         self.gui_mode = False
@@ -312,7 +392,7 @@ class PasswordVault(object):
         elif self.file_name is None:
             lg.error('A targeted filename is required if not running in GUI mode!')
         else:
-            self.populate_from_existing_byte_file(self.file_name)
+            self.populate_from_existing_password_file(self.file_name)
 
         self.logging_setup()
 
@@ -323,21 +403,8 @@ class PasswordVault(object):
             logger = lg.getLogger()
             logger.setLevel(lg.INFO)
             logger.addHandler(texthandler)
-        else:
-            log_file_formatter = lg.Formatter(
-                "[%(asctime)s] [%(levelname)-8s]: %(message)s (%(funcName)s:%(lineno)s)",
-                datefmt='%m/%d/%Y %I:%M:%S%p'
-            )
-            log_file_handler = FileHandler(
-                'resources\PasswordVault.log',
-                mode='w'
-            )
-            log_file_handler.setFormatter(log_file_formatter)
-            logger = lg.getLogger()
-            logger.setLevel(lg.INFO)
-            logger.addHandler(log_file_handler)
 
-    def populate_from_existing_byte_file(self, filename):
+    def populate_from_existing_password_file(self, filename):
         if os.path.exists('resources/' + filename):
             try:
                 with open('resources/' + filename, 'rb') as f:
@@ -347,8 +414,8 @@ class PasswordVault(object):
         else:
             lg.info('Did not find an existing password file.')
 
-    def generate_byte_file(self):
-        with open('resources/password_vault_passwords.pk', 'wb') as f:
+    def save_file(self):
+        with open('resources/' + self.file_name, 'wb') as f:
             pk.dump(self.auth_record_list, f)
 
     def get_auth_record(self, inc_system):
@@ -363,7 +430,8 @@ class PasswordVault(object):
                 lg.error('Already have a record for %s in %s. Please edit the existing record.', inc_system,
                          self.file_name)
                 return
-        self.auth_record_list.append(AuthRecord(inc_system, inc_username, inc_password))
+        self.auth_record_list.append(self.AuthRecord(inc_system, inc_username, inc_password))
+        self.save_file()
         lg.info('Successfully added %s to %s.', inc_system, self.file_name)
 
     def delete_auth_record(self, inc_system):
@@ -378,6 +446,7 @@ class PasswordVault(object):
 
         if removed:
             lg.info('Successfully deleted the auth record %s in %s', inc_system, self.file_name)
+            self.save_file()
         else:
             lg.warning('Could not delete that authentication record because I could not find it in %s.', self.file_name)
 
@@ -393,6 +462,7 @@ class PasswordVault(object):
 
         if found:
             lg.info('Successfully edited the %s entry in %s.', inc_system, self.file_name)
+            self.save_file()
         else:
             lg.warning('Could not find an entry with the system %s!', inc_system)
 
