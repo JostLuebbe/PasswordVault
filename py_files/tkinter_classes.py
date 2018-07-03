@@ -170,7 +170,8 @@ class PasswordFileViewer(object):
             return
 
         if tk.messagebox.askyesno('Delete Record',
-                                  f'Are you sure you want to delete {self.pv.password_file_name} from {self.pv.password_file_path}?'):
+                                  'Are you sure you want to delete '
+                                  f'{self.pv.password_file_name} from {self.pv.password_file_path}?'):
             self.passwords_tree.delete(*self.passwords_tree.get_children())
             self.pv.save_password_file()
             self.pv.delete_password_file()
@@ -192,15 +193,17 @@ class PasswordFileViewer(object):
     def add_auth_record(self):
         if None in [self.pv.password_file_path, self.pv.password_file_name]:
             tk.messagebox.showerror('Error',
-                                    'Please open or create a password file before trying to add an authentication record.')
+                                    'Please open or create a password '
+                                    'file before trying to add an authentication record.')
             return
 
         add_auth_record_window = tk.Toplevel()
         add_auth_record_window.wm_title('Add Record')
 
-        l = tk.Label(add_auth_record_window,
-                     text='Input the following three fields to add a record to ' + self.pv.password_file_name + '.')
-        l.grid(row=0, column=0, columnspan=2)
+        auth_record_window_label = tk.Label(
+            add_auth_record_window,
+            text='Input the following three fields to add a record to ' + self.pv.password_file_name + '.')
+        auth_record_window_label.grid(row=0, column=0, columnspan=2)
 
         sys_label = tk.Label(add_auth_record_window, text='System:')
         sys_label.grid(column=0, row=1)
@@ -238,7 +241,8 @@ class PasswordFileViewer(object):
     def edit_auth_record(self, event=None):
         if None in [self.pv.password_file_path, self.pv.password_file_name]:
             tk.messagebox.showerror('Error',
-                                    'Please open or create a password file before trying to edit an authentication record.')
+                                    'Please open or create a password file '
+                                    'before trying to edit an authentication record.')
             return
 
         if not self.passwords_tree.focus():
@@ -277,7 +281,8 @@ class PasswordFileViewer(object):
     def delete_auth_record(self):
         if None in [self.pv.password_file_path, self.pv.password_file_name]:
             tk.messagebox.showerror('Error',
-                                    'Please open or create a password file before trying to delete an authentication record.')
+                                    'Please open or create a password file '
+                                    'before trying to delete an authentication record.')
             return
 
         if not self.passwords_tree.focus():
@@ -289,7 +294,8 @@ class PasswordFileViewer(object):
         auth_record_system = self.passwords_tree.item(selected_item, 'text')
 
         if tk.messagebox.askyesno('Delete Record',
-                                  f'Are you sure you want to delete {auth_record_system} from {self.pv.password_file_name}?'):
+                                  'Are you sure you want to delete '
+                                  f'{auth_record_system} from {self.pv.password_file_name}?'):
             self.pv.delete_auth_record(auth_record_system)
             self.passwords_tree.delete(selected_item)
 

@@ -7,7 +7,6 @@ import tkinter as tk
 import pandas as pd
 import pendulum as pend
 from cryptography.fernet import Fernet
-
 from py_files.logging_classes import TextHandler
 from py_files.tkinter_classes import PasswordFileViewer
 
@@ -47,12 +46,12 @@ class PasswordVault(object):
             logger.setLevel(lg.INFO)
             logger.addHandler(text_handler)
         else:
-            logFormatter = lg.Formatter("[%(funcName)s] [%(levelname)s] %(message)s")
+            log_formatter = lg.Formatter("[%(funcName)s] [%(levelname)s] %(message)s")
             logger = lg.getLogger()
 
-            consoleHandler = lg.StreamHandler()
-            consoleHandler.setFormatter(logFormatter)
-            logger.addHandler(consoleHandler)
+            console_handler = lg.StreamHandler()
+            console_handler.setFormatter(log_formatter)
+            logger.addHandler(console_handler)
             logger.setLevel(lg.INFO)
 
     def create_password_file(self):
@@ -126,7 +125,8 @@ class PasswordVault(object):
         except sq.IntegrityError as e:
             if 'UNIQUE' in str(e):
                 lg.warning(
-                    'An entry with the system %s already exists in  %s, please edit it or create a new record with a different system',
+                    '''An entry with the system %s already exists in  %s, 
+                    please edit it or create a new record with a different system''',
                     inc_system,
                     self.password_file_name
                 )
