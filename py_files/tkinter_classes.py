@@ -181,6 +181,7 @@ class PasswordFileViewer(object):
         self.master = master
         master.title('PasswordVault')
         self.master.protocol('WM_DELETE_WINDOW', self.end_password_vault)
+        self.master.minsize(1100, 500)
 
         # Declare GUI Variables
         self.pv = pv
@@ -188,6 +189,7 @@ class PasswordFileViewer(object):
         # Declare GUI Components
         self.main_frame = tk.Frame(self.master)
         self.passwords_tree = ttk.Treeview(self.main_frame)
+        self.password_file_label = tk.Label(self.main_frame)
         self.debug_info = st.ScrolledText(self.main_frame)
         self.open_password_file_button = tk.Button(self.main_frame)
         self.create_password_file_button = tk.Button(self.main_frame)
@@ -207,70 +209,91 @@ class PasswordFileViewer(object):
 
         tk.Grid.columnconfigure(self.main_frame, 0, weight=1)
         tk.Grid.columnconfigure(self.main_frame, 1, weight=1)
-        tk.Grid.rowconfigure(self.main_frame, 0, weight=1)
-        # tk.Grid.rowconfigure(self.main_frame, 1, weight=1)
-        tk.Grid.rowconfigure(self.main_frame, 2, weight=1)
-        tk.Grid.rowconfigure(self.main_frame, 3, weight=1)
-        tk.Grid.rowconfigure(self.main_frame, 4, weight=1)
+        # tk.Grid.rowconfigure(self.main_frame, 0, weight=1)
+        tk.Grid.rowconfigure(self.main_frame, 1, weight=1)
+        # tk.Grid.rowconfigure(self.main_frame, 2, weight=1)
+        # tk.Grid.rowconfigure(self.main_frame, 3, weight=1)
+        # tk.Grid.rowconfigure(self.main_frame, 4, weight=1)
 
-        self.passwords_tree['columns'] = ('user', 'pass')
+        self.passwords_tree['columns'] = ('user', 'date')
         self.passwords_tree['height'] = 10
 
-        self.passwords_tree.column('#0', minwidth=100, width=100, stretch=True)
-        self.passwords_tree.column('user', minwidth=100, width=100, stretch=True)
-        self.passwords_tree.column('pass', minwidth=100, width=100, stretch=True)
+        self.passwords_tree.column('#0', anchor=tk.CENTER, minwidth=100, width=100, stretch=True)
+        self.passwords_tree.column('user', anchor=tk.CENTER, minwidth=100, width=100, stretch=True)
+        self.passwords_tree.column('date', anchor=tk.CENTER, minwidth=150, width=150, stretch=True)
 
         self.passwords_tree.heading('#0', text='System')
         self.passwords_tree.heading('user', text='Username')
-        self.passwords_tree.heading('pass', text='Password')
+        self.passwords_tree.heading('date', text='Creation Date')
 
         self.passwords_tree.bind('<Double-Button-1>', self.edit_auth_record)
+
+        self.password_file_label.config(
+            text='no password file selected',
+            height=2
+        )
 
         self.debug_info.config(
             state='disabled',
             font='TkFixedFont',
-            wrap=tk.WORD
+            wrap=tk.WORD,
+            width=30
         )
         self.debug_info.tag_config('warning', foreground='red')
 
         self.open_password_file_button.config(
             text='Open File',
-            command=self.open_password_file
+            command=self.open_password_file,
+            height=2,
+            font=('Georgia bold',),
+            overrelief=tk.GROOVE
         )
 
         self.create_password_file_button.config(
             text='Create File',
-            command=self.create_password_file
+            command=self.create_password_file,
+            height=2,
+            font=('Georgia bold',),
+            overrelief=tk.GROOVE
         )
 
         self.delete_password_file_button.config(
             text='Delete File',
-            command=self.delete_password_file
+            command=self.delete_password_file,
+            height=2,
+            font=('Georgia bold',),
+            overrelief=tk.GROOVE
         )
 
         self.add_auth_record_button.config(
             text='+',
             command=self.add_auth_record,
             height=1,
-            width=2
+            width=2,
+            font=('Georgia bold',),
+            overrelief=tk.GROOVE
         )
 
         self.delete_auth_record_button.config(
             text='-',
             command=self.delete_auth_record,
             height=1,
-            width=2
+            width=2,
+            font=('Georgia bold',),
+            overrelief=tk.GROOVE
         )
 
     def grid_components(self):
         self.main_frame.grid(column=0, row=0, sticky=tk.NSEW)
-        self.debug_info.grid(column=0, row=0, rowspan=5, sticky=tk.NSEW)
-        self.passwords_tree.grid(column=1, row=0, rowspan=2, sticky=tk.NSEW)
-        self.open_password_file_button.grid(column=1, row=2, sticky=tk.NSEW)
-        self.create_password_file_button.grid(column=1, row=3, sticky=tk.NSEW)
-        self.delete_password_file_button.grid(column=1, row=4, sticky=tk.NSEW)
-        self.add_auth_record_button.grid(column=2, row=0, sticky=tk.S)
-        self.delete_auth_record_button.grid(column=2, row=1, sticky=tk.N)
+
+        self.debug_info.grid(column=0, row=0, rowspan=6, sticky=tk.NSEW)
+        self.password_file_label.grid(column=1, row=0, columnspan=2)
+        self.passwords_tree.grid(column=1, row=1, rowspan=2, sticky=tk.NSEW)
+        self.open_password_file_button.grid(column=1, row=3, sticky=tk.NSEW)
+        self.create_password_file_button.grid(column=1, row=4, sticky=tk.NSEW)
+        self.delete_password_file_button.grid(column=1, row=5, sticky=tk.NSEW)
+        self.add_auth_record_button.grid(column=2, row=1, sticky=tk.S)
+        self.delete_auth_record_button.grid(column=2, row=2, sticky=tk.N)
 
     def open_password_file(self):
         file_path = tk.filedialog.askopenfile()
@@ -284,6 +307,10 @@ class PasswordFileViewer(object):
             self.pv.open_password_file()
 
             self.update_file_tree()
+
+            self.password_file_label['text'] = self.pv.password_file_name
+            self.password_file_label['fg'] = 'Blue'
+            self.password_file_label['font'] = ('Georgia bold', 14)
 
     def create_password_file(self):
         file_path = tk.filedialog.askdirectory()
@@ -302,8 +329,24 @@ class PasswordFileViewer(object):
 
                 self.pv.create_password_file()
 
+                self.password_file_label['text'] = self.pv.password_file_name
+                self.password_file_label['fg'] = 'Blue'
+                self.password_file_label['font'] = ('Georgia bold', 14)
+
     def delete_password_file(self):
-        lg.error('Sorry this function has not been implemented yet!')
+        if None in [self.pv.password_file_path, self.pv.password_file_name]:
+            lg.warning('Please open or create a password file before trying to delete it!')
+            return
+
+        if tk.messagebox.askyesno('Delete Record',
+                                  f'Are you sure you want to delete {self.pv.password_file_name} from {self.pv.password_file_path}?'):
+            self.passwords_tree.delete(*self.passwords_tree.get_children())
+            self.pv.save_password_file()
+            self.pv.delete_password_file()
+
+            self.password_file_label['text'] = 'no password file selected'
+            self.password_file_label['fg'] = 'black'
+            self.password_file_label['font'] = 'TkDefaultFont'
 
     def update_file_tree(self):
         self.passwords_tree.delete(*self.passwords_tree.get_children())
@@ -313,108 +356,111 @@ class PasswordFileViewer(object):
         fetch_result = self.pv.data_base_cursor.fetchall()
 
         for auth_record in fetch_result:
-            self.passwords_tree.insert('', 0, text=auth_record[0], values=(auth_record[1], auth_record[2]))
+            self.passwords_tree.insert('', 0, text=auth_record[0], values=(auth_record[1], auth_record[4]))
 
     def add_auth_record(self):
         if None in [self.pv.password_file_path, self.pv.password_file_name]:
-            lg.warning('Please open or create a password file before trying to add an authentication record!')
+            tk.messagebox.showerror('Error',
+                                    'Please open or create a password file before trying to add an authentication record.')
             return
 
-        window = tk.Toplevel()
-        window.wm_title('Add Record')
+        add_auth_record_window = tk.Toplevel()
+        add_auth_record_window.wm_title('Add Record')
 
-        l = tk.Label(window,
+        l = tk.Label(add_auth_record_window,
                      text='Input the following three fields to add a record to ' + self.pv.password_file_name + '.')
         l.grid(row=0, column=0, columnspan=2)
 
-        sys_label = tk.Label(window, text='System:')
+        sys_label = tk.Label(add_auth_record_window, text='System:')
         sys_label.grid(column=0, row=1)
 
-        sys_entry = tk.Entry(window)
+        sys_entry = tk.Entry(add_auth_record_window)
         sys_entry.grid(column=1, row=1)
 
-        username_label = tk.Label(window, text='Username:')
+        username_label = tk.Label(add_auth_record_window, text='Username:')
         username_label.grid(column=0, row=2)
 
-        username_entry = tk.Entry(window)
+        username_entry = tk.Entry(add_auth_record_window)
         username_entry.grid(column=1, row=2)
 
-        password_label = tk.Label(window, text='Password:')
+        password_label = tk.Label(add_auth_record_window, text='Password:')
         password_label.grid(column=0, row=3)
 
-        password_entry = tk.Entry(window, show='*')
+        password_entry = tk.Entry(add_auth_record_window, show='*')
         password_entry.grid(column=1, row=3)
 
-        def submit_record(window):
+        def submit_record(event=None):
             if not (sys_entry.get() and username_entry.get() and password_entry.get()):
                 tk.messagebox.showerror('Input Error', 'Please fill all fields to add an auth record.')
                 return
 
             self.pv.add_auth_record(sys_entry.get(), username_entry.get(), password_entry.get())
             self.update_file_tree()
-            window.destroy()
 
-        b = tk.Button(window, text='Submit', command=lambda: submit_record(window))
+            add_auth_record_window.destroy()
+
+        add_auth_record_window.bind('<Return>', submit_record)
+
+        b = tk.Button(add_auth_record_window, text='Submit', command=submit_record)
         b.grid(column=0, row=4, columnspan=2)
 
-    def edit_auth_record(self, event):
-        auth_record_window = tk.Toplevel()
-        auth_record_window.wm_title('Edit Record')
+    def edit_auth_record(self, event=None):
+        if None in [self.pv.password_file_path, self.pv.password_file_name]:
+            tk.messagebox.showerror('Error',
+                                    'Please open or create a password file before trying to edit an authentication record.')
+            return
 
-        l = tk.Label(window, text='Please enter the new information for this auth record.')
+        if not self.passwords_tree.focus():
+            tk.messagebox.showerror('Error', 'Please select an authentication record to edit.')
+            return
+
+        edit_auth_record_window = tk.Toplevel()
+        edit_auth_record_window.wm_title('Edit Record')
+
+        l = tk.Label(edit_auth_record_window, text='Please enter the new information for this auth record.')
         l.grid(row=0, column=0, columnspan=2)
 
-        username_label = tk.Label(window, text='New Username:')
+        username_label = tk.Label(edit_auth_record_window, text='New Username:')
         username_label.grid(column=0, row=2)
 
-        username_entry = tk.Entry(window)
+        username_entry = tk.Entry(edit_auth_record_window)
         username_entry.grid(column=1, row=2)
 
-        password_label = tk.Label(window, text='New Password:')
+        password_label = tk.Label(edit_auth_record_window, text='New Password:')
         password_label.grid(column=0, row=3)
 
-        password_entry = tk.Entry(window, show='*')
+        password_entry = tk.Entry(edit_auth_record_window, show='*')
         password_entry.grid(column=1, row=3)
 
-        def submit_record(window):
+        def submit_record(event=None):
             self.pv.edit_auth_record(self.passwords_tree.item(self.passwords_tree.focus())['text'],
                                      username_entry.get(), password_entry.get())
-            self.update_auth_record_tree()
-            self.file_viewer.update_file_tree()
-            window.destroy()
+            self.update_file_tree()
+            edit_auth_record_window.destroy()
 
-        b = tk.Button(window, text='Submit', command=lambda: submit_record(window))
+        edit_auth_record_window.bind('<Return>', submit_record)
+
+        b = tk.Button(edit_auth_record_window, text='Submit', command=submit_record)
         b.grid(column=0, row=4, columnspan=2)
 
     def delete_auth_record(self):
         if None in [self.pv.password_file_path, self.pv.password_file_name]:
-            lg.warning('Please open or create a password file before trying to add an authentication record!')
+            tk.messagebox.showerror('Error',
+                                    'Please open or create a password file before trying to delete an authentication record.')
             return
 
-        window = tk.Toplevel()
-        window.wm_title('Delete Record')
+        if not self.passwords_tree.focus():
+            tk.messagebox.showerror('Error', 'Please select an authentication record to delete.')
+            return
 
-        l = tk.Label(window,
-                     text='Input the system of the auth record you want to delete from ' + self.pv.password_file_name + '.')
-        l.grid(row=0, column=0, columnspan=2)
+        selected_item = self.passwords_tree.focus()
 
-        sys_label = tk.Label(window, text='System:')
-        sys_label.grid(column=0, row=1)
+        auth_record_system = self.passwords_tree.item(selected_item, 'text')
 
-        sys_entry = tk.Entry(window)
-        sys_entry.grid(column=1, row=1)
-
-        def submit_record(window):
-            if not sys_entry.get():
-                tk.messagebox.showerror('Input Error', 'Please input the system of the auth record you want to delete.')
-                return
-
-            self.pv.delete_auth_record(sys_entry.get())
-            self.update_file_tree()
-            window.destroy()
-
-        b = tk.Button(window, text='Submit', command=lambda: submit_record(window))
-        b.grid(column=0, row=2, columnspan=2)
+        if tk.messagebox.askyesno('Delete Record',
+                                  f'Are you sure you want to delete {auth_record_system} from {self.pv.password_file_name}?'):
+            self.pv.delete_auth_record(auth_record_system)
+            self.passwords_tree.delete(selected_item)
 
     def end_password_vault(self):
         self.pv.save_password_file()

@@ -5,6 +5,7 @@ import sys
 import tkinter as tk
 
 import pandas as pd
+import pendulum as pend
 from cryptography.fernet import Fernet
 
 from py_files.logging_classes import TextHandler
@@ -27,7 +28,7 @@ class PasswordVault(object):
         if master is not None:
             if self.password_file_path is None:
                 self.password_file_path = './resources/'
-            
+
             self.gui_mode = True
             self.file_viewer_gui = PasswordFileViewer(master, self)
             self.logging_setup()
@@ -62,7 +63,7 @@ class PasswordVault(object):
             self.data_base_connection = sq.connect(self.password_file_path + self.password_file_name + '.db')
             self.data_base_cursor = self.data_base_connection.cursor()
             self.data_base_cursor.execute(
-                'CREATE TABLE auth_records (system text, username text, token text, key text)')
+                'CREATE TABLE auth_records (system text, username text, token text, key text, date text)')
             self.data_base_cursor.execute('CREATE UNIQUE INDEX system ON auth_records(username, token, key)')
 
             lg.info('Created a new password file called %s in %s', self.password_file_name, self.password_file_path)
@@ -83,6 +84,12 @@ class PasswordVault(object):
             lg.info('Opened up the password file %s in %s', self.password_file_name, self.password_file_path)
         except Exception as e:
             lg.error('%s: %s', sys.exc_info()[0], e)
+
+    def delete_password_file(self):
+        if not os.path.exists(self.password_file_path + self.password_file_name + '.db'):
+            lg.error(f'Cannot find {self.password_file_name} in {self.password_file_path}.')
+        else:
+            os.remove(self.password_file_path + self.password_file_name + '.db')
 
     def save_password_file(self):
         if self.data_base_connection is not None:
@@ -109,8 +116,10 @@ class PasswordVault(object):
             f = Fernet(key)
             token = f.encrypt(inc_password.encode())
 
-            self.data_base_cursor.execute("INSERT INTO auth_records VALUES (?, ?, ?, ?)",
-                                          (inc_system, inc_username, token, key))
+            dt = pend.now()
+
+            self.data_base_cursor.execute("INSERT INTO auth_records VALUES (?, ?, ?, ?, ?)",
+                                          (inc_system, inc_username, token, key, dt.format('YYYY-MM-DD HH:mm:ss')))
             self.data_base_connection.commit()
 
             lg.info('Successfully added %s to %s.', inc_system, self.password_file_name)
