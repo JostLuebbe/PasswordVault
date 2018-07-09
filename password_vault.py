@@ -3,12 +3,10 @@ import os
 import sqlite3 as sq
 import sys
 import tkinter as tk
+from datetime import datetime as dt
 
 import pandas as pd
-import pendulum as pend
 from cryptography.fernet import Fernet
-from py_files.logging_classes import TextHandler
-from py_files.tkinter_classes import PasswordFileViewer
 
 
 class PasswordVault(object):
@@ -25,6 +23,9 @@ class PasswordVault(object):
         self.data_base_cursor = None
 
         if master is not None:
+
+            from PasswordVault.py_files.tkinter_classes import PasswordFileViewer
+
             if self.password_file_path is None:
                 self.password_file_path = './resources/'
 
@@ -40,24 +41,28 @@ class PasswordVault(object):
 
     def logging_setup(self):
         if self.gui_mode:
+            from PasswordVault.py_files.logging_classes import TextHandler
             text_handler = TextHandler(self.file_viewer_gui.debug_info)
 
             logger = lg.getLogger()
             logger.setLevel(lg.INFO)
             logger.addHandler(text_handler)
         else:
-            log_formatter = lg.Formatter("[%(funcName)s] [%(levelname)s] %(message)s")
-            logger = lg.getLogger()
+            if not lg.getLogger().handlers:
+                log_formatter = lg.Formatter("[%(funcName)s] [%(levelname)s] %(message)s")
+                logger = lg.getLogger()
 
-            console_handler = lg.StreamHandler()
-            console_handler.setFormatter(log_formatter)
-            logger.addHandler(console_handler)
-            logger.setLevel(lg.INFO)
+                console_handler = lg.StreamHandler()
+                console_handler.setFormatter(log_formatter)
+                logger.addHandler(console_handler)
+                logger.setLevel(lg.INFO)
 
     def create_password_file(self):
         if os.path.exists(self.password_file_path + self.password_file_name + '.db'):
             self.open_password_file()
             return
+        elif not os.path.exists(self.password_file_path):
+            lg.error(f'This path does not exist: {self.password_file_path}')
         try:
             self.data_base_connection = sq.connect(self.password_file_path + self.password_file_name + '.db')
             self.data_base_cursor = self.data_base_connection.cursor()
@@ -66,6 +71,8 @@ class PasswordVault(object):
             self.data_base_cursor.execute('CREATE UNIQUE INDEX system ON auth_records(username, token, key)')
 
             lg.info('Created a new password file called %s in %s', self.password_file_name, self.password_file_path)
+        except sq.OperationalError:
+            lg.error(f'Unable to open database file {self.password_file_name} in {self.password_file_path}')
         except Exception as e:
             lg.error('%s: %s', sys.exc_info()[0], e)
 
@@ -81,6 +88,8 @@ class PasswordVault(object):
                 self.file_viewer_gui.update_file_tree()
 
             lg.info('Opened up the password file %s in %s', self.password_file_name, self.password_file_path)
+        except sq.OperationalError:
+            lg.error(f'Unable to open database file {self.password_file_name} in {self.password_file_path}')
         except Exception as e:
             lg.error('%s: %s', sys.exc_info()[0], e)
 
@@ -115,10 +124,9 @@ class PasswordVault(object):
             f = Fernet(key)
             token = f.encrypt(inc_password.encode())
 
-            dt = pend.now()
-
             self.data_base_cursor.execute("INSERT INTO auth_records VALUES (?, ?, ?, ?, ?)",
-                                          (inc_system, inc_username, token, key, dt.format('YYYY-MM-DD HH:mm:ss')))
+                                          (
+                                          inc_system, inc_username, token, key, dt.now().strftime('%Y-%m-%d %H:%M:%S')))
             self.data_base_connection.commit()
 
             lg.info('Successfully added %s to %s.', inc_system, self.password_file_name)
