@@ -190,7 +190,7 @@ class PasswordVault(object):
 
     def list_records(self):
         try:
-            df = pd.read_sql_query("SELECT * FROM auth_records", self.data_base_connection)
+            df = pd.read_sql_query("SELECT system, username FROM auth_records", self.data_base_connection)
             with pd.option_context('display.max_rows', None, 'display.max_columns', None):
                 print(df)
         except Exception as e:
@@ -201,20 +201,3 @@ if __name__ == '__main__':
     root = tk.Tk()
     PasswordVault(root)
     root.mainloop()
-
-    # pv = PasswordVault(file_path='./resources/', file_name='test')
-    #
-    # # pv.add_auth_record('test_system_1', 'test_username_1', 'test_password_1')
-    #
-    # # pv.add_auth_record('test_system_2', 'test_username_2', 'test_password_2')
-    #
-    # # pv.list_records()
-    #
-    # # pv.edit_auth_record('test_system', '', '')
-    # # pv.edit_auth_record('test_system', 'new_test_user', 'new_test_pass')
-    #
-    # # pv.list_records()
-    #
-    # print(pv.get_auth_record('test_system_1'))
-    #
-    # pv.save_password_file()
